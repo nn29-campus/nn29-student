@@ -4079,6 +4079,29 @@ ol {
   color: #9a4a00;
 }
 
+
+.feed-head__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.feed-head__right button {
+  font-size: 11px;
+  color: var(--blue);
+}
+.feed-head__right button:hover {
+  text-decoration: underline;
+}
+.community-loading {
+  padding: 28px;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 @media print {
   .site-head,
   .site-foot,

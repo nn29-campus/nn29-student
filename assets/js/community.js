@@ -1,21 +1,21 @@
 (function () {
   "use strict";
 
-  var doc = document;
+  var API_BASE = "https://subtle-galliform-d9e89d1ceff81bc.api.tcloudbasegateway.com";
   var ID_KEY = "nn29_community_id_v1";
-  var POSTS_KEY = "nn29_community_posts_v2";
-  var PENDING_KEY = "nn29_community_pending_v1";
-  var PENDING_REPLIES_KEY = "nn29_community_pending_replies_v1";
+  var DEVICE_KEY = "nn29_community_device_v1";
   var MAX_IMAGES = 3;
   var MAX_TEXT = 800;
   var CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
   var state = {
     posts: [],
-    pending: [],
     cat: "all",
     sort: "latest",
-    images: []
+    images: [],
+    loading: false,
+    token: "",
+    error: ""
   };
 
   function esc(value) {
@@ -26,10 +26,6 @@
 
   function nl2br(value) {
     return esc(value).replace(/\n/g, "<br>");
-  }
-
-  function uid(prefix) {
-    return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
 
   function code() {
@@ -53,6 +49,16 @@
     syncAnonId();
   }
 
+  function getDeviceId() {
+    var id = "";
+    try { id = localStorage.getItem(DEVICE_KEY) || ""; } catch (e) {}
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "dev-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+      try { localStorage.setItem(DEVICE_KEY, id); } catch (e) {}
+    }
+    return id;
+  }
+
   function avatarColor(id) {
     var h = 0;
     for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
@@ -70,16 +76,20 @@
     for (var j = 0; j < names.length; j++) names[j].textContent = id;
   }
 
+  var doc = document;
+
   function toast(text) {
     var el = doc.querySelector(".toast");
     if (!el) return;
     el.textContent = text;
     el.classList.add("is-on");
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(function () { el.classList.remove("is-on"); }, 2400);
+    toast.timer = setTimeout(function () { el.classList.remove("is-on"); }, 2800);
   }
 
-  function timeAgo(ts) {
+  function timeAgo(value) {
+    var ts = typeof value === "number" ? value : Date.parse(value);
+    if (!ts || Number.isNaN(ts)) return "";
     var diff = Date.now() - ts;
     if (diff < 60000) return "刚刚";
     if (diff < 3600000) return Math.floor(diff / 60000) + " 分钟前";
@@ -89,68 +99,86 @@
     return (d.getMonth() + 1) + "月" + d.getDate() + "日";
   }
 
-  function loadPosts() {
-    var raw = "";
-    try { raw = localStorage.getItem(POSTS_KEY) || ""; } catch (e) {}
-    if (!raw) return [];
-    try {
-      var parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
+  async function getToken(force) {
+    if (state.token && !force) return state.token;
+    var res = await fetch(API_BASE + "/auth/v1/signin/anonymously", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-device-id": getDeviceId() },
+      body: "{}"
+    });
+    var body = await res.text();
+    if (!res.ok) throw new Error("匿名登录失败");
+    var data = JSON.parse(body);
+    if (!data.access_token) throw new Error("匿名登录未返回 token");
+    state.token = data.access_token;
+    return state.token;
   }
 
-  function loadPending() {
-    var raw = "";
-    try { raw = localStorage.getItem(PENDING_KEY) || ""; } catch (e) {}
-    if (!raw) return [];
-    try {
-      var parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
+  async function api(path, options, retried) {
+    var token = await getToken();
+    var opts = options || {};
+    opts.headers = Object.assign({}, opts.headers || {}, { Authorization: "Bearer " + token });
+    var res = await fetch(API_BASE + path, opts);
+    if (res.status === 401 && !retried) {
+      state.token = "";
+      await getToken(true);
+      return api(path, options, true);
     }
+    var text = await res.text();
+    if (!res.ok) {
+      var message = "请求失败";
+      try {
+        var parsed = JSON.parse(text);
+        message = parsed.message || parsed.error_description || parsed.error || message;
+      } catch (e) {}
+      throw new Error(message);
+    }
+    return text ? JSON.parse(text) : null;
   }
 
-  function savePending() {
-    try {
-      localStorage.setItem(PENDING_KEY, JSON.stringify(state.pending));
-      return true;
-    } catch (e) {
-      toast("本机存储空间不足，请减少图片后再试");
-      return false;
-    }
+  function normalizePost(row) {
+    return {
+      id: row.id,
+      anon: row.anon_name,
+      cat: row.category,
+      title: row.title || "",
+      text: row.content || "",
+      images: Array.isArray(row.images) ? row.images : [],
+      createdAt: Date.parse(row.created_at) || Date.now(),
+      replies: []
+    };
   }
 
-  function loadPendingReplies() {
+  async function loadFeed() {
+    state.loading = true;
+    state.error = "";
+    render();
     try {
-      var parsed = JSON.parse(localStorage.getItem(PENDING_REPLIES_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function savePendingReply(reply) {
-    var list = loadPendingReplies();
-    list.unshift(reply);
-    try {
-      localStorage.setItem(PENDING_REPLIES_KEY, JSON.stringify(list));
-      return true;
-    } catch (e) {
-      toast("本机存储空间不足，回复暂未保存");
-      return false;
-    }
-  }
-
-  function savePosts(posts) {
-    try {
-      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
-      return true;
-    } catch (e) {
-      toast("本机存储空间不足，请减少图片后再试");
-      return false;
+      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,created_at&status=eq.approved&order=created_at.desc&limit=50");
+      var replies = await api("/v1/rdb/rest/community_replies?select=id,post_id,anon_name,content,created_at&status=eq.approved&order=created_at.asc&limit=300");
+      var byPost = {};
+      (replies || []).forEach(function (reply) {
+        var id = reply.post_id;
+        if (!byPost[id]) byPost[id] = [];
+        byPost[id].push({
+          id: reply.id,
+          anon: reply.anon_name,
+          text: reply.content,
+          createdAt: Date.parse(reply.created_at) || Date.now()
+        });
+      });
+      state.posts = (posts || []).map(function (row) {
+        var post = normalizePost(row);
+        post.replies = byPost[post.id] || [];
+        return post;
+      });
+    } catch (err) {
+      state.posts = [];
+      state.error = err && err.message ? err.message : "加载失败";
+      toast("讨论区加载失败：" + state.error);
+    } finally {
+      state.loading = false;
+      render();
     }
   }
 
@@ -169,8 +197,6 @@
   }
 
   function postHtml(post) {
-    var liked = post.liked ? " is-liked" : "";
-    var heart = post.liked ? "♥" : "♡";
     return '<article class="post" data-post="' + esc(post.id) + '">' +
       '<div class="post__head">' +
         '<span class="anon-avatar" style="background:' + avatarColor(post.anon) + '" aria-hidden="true">学</span>' +
@@ -181,7 +207,6 @@
       (post.text ? '<p class="post__text">' + nl2br(post.text) + '</p>' : "") +
       postImagesHtml(post.images) +
       '<div class="post__foot">' +
-        '<button type="button" class="' + liked.trim() + '" data-like="' + esc(post.id) + '">' + heart + ' <span>' + (post.likes || 0) + '</span></button>' +
         '<button type="button" data-focus-reply="' + esc(post.id) + '">回复 ' + ((post.replies || []).length || "") + '</button>' +
       '</div>' +
       '<div class="replies">' + repliesHtml(post) + '</div>' +
@@ -196,54 +221,40 @@
     var posts = state.posts.slice();
     if (state.cat !== "all") posts = posts.filter(function (p) { return p.cat === state.cat; });
     if (state.sort === "hot") {
-      posts.sort(function (a, b) {
-        return (b.likes + (b.replies || []).length * 2) - (a.likes + (a.replies || []).length * 2);
-      });
+      posts.sort(function (a, b) { return (b.replies || []).length - (a.replies || []).length; });
     } else {
       posts.sort(function (a, b) { return b.createdAt - a.createdAt; });
     }
     return posts;
   }
 
-  function renderPending() {
-    var box = doc.getElementById("pending-box");
-    var list = doc.getElementById("pending-list");
-    var count = doc.getElementById("pending-count");
-    if (!box || !list) return;
-    var pending = state.pending || [];
-    if (!pending.length) {
-      box.hidden = true;
-      list.innerHTML = "";
-      return;
-    }
-    box.hidden = false;
-    if (count) count.textContent = pending.length + " 条";
-    list.innerHTML = pending.map(function (post) {
-      return '<div class="pending-item">' +
-        '<div class="pending-item__head"><strong>' + esc(post.title || "无标题") + '</strong><span>审核中</span></div>' +
-        (post.text ? '<p>' + nl2br(post.text) + '</p>' : "") +
-        (post.images && post.images.length ? '<div class="pending-item__images">' + post.images.map(function (src) {
-          return '<img src="' + esc(src) + '" alt="待审核图片">';
-        }).join("") + "</div>" : "") +
-        '<div class="pending-item__foot"><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span><button type="button" data-remove-pending="' + esc(post.id) + '">删除</button></div>' +
-      '</div>';
-    }).join("");
-  }
-
   function render() {
-    renderPending();
     var list = doc.getElementById("post-list");
     var empty = doc.getElementById("community-empty");
     var count = doc.getElementById("post-count");
+    var head = doc.querySelector(".feed-head h2");
     var posts = visiblePosts();
-    if (count) count.textContent = posts.length + " 条讨论";
+    if (count) count.textContent = state.loading ? "加载中…" : posts.length + " 条讨论";
+    if (head) head.textContent = "大家在聊";
     if (!list) return;
+    if (state.loading) {
+      list.innerHTML = '<div class="community-loading">正在加载讨论…</div>';
+      if (empty) empty.hidden = true;
+      return;
+    }
     list.innerHTML = posts.map(postHtml).join("");
-    if (empty) empty.hidden = posts.length !== 0;
-  }
-
-  function updateNameAndAvatar() {
-    syncAnonId();
+    if (empty) {
+      empty.hidden = posts.length !== 0;
+      var strong = empty.querySelector("strong");
+      var p = empty.querySelector("p");
+      if (state.error) {
+        if (strong) strong.textContent = "暂时没能加载讨论区。";
+        if (p) p.textContent = state.error + "，请稍后刷新。";
+      } else {
+        if (strong) strong.textContent = "还没有通过审核的帖子。";
+        if (p) p.textContent = "你提交的内容会先进入审核队列，通过后才会出现在这里。";
+      }
+    }
   }
 
   function resetComposer() {
@@ -272,7 +283,7 @@
         var img = new Image();
         img.onerror = function () { reject(new Error("decode-failed")); };
         img.onload = function () {
-          var max = 1100;
+          var max = 900;
           var w = img.naturalWidth;
           var h = img.naturalHeight;
           if (w > max || h > max) {
@@ -287,7 +298,7 @@
           ctx.fillStyle = "#fff";
           ctx.fillRect(0, 0, w, h);
           ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL("image/jpeg", 0.76));
+          resolve(canvas.toDataURL("image/jpeg", 0.72));
         };
         img.src = reader.result;
       };
@@ -295,9 +306,20 @@
     });
   }
 
-  function bind() {
-    updateNameAndAvatar();
+  function setBusy(button, busy, label) {
+    if (!button) return;
+    if (busy) {
+      button.dataset.label = button.textContent;
+      button.textContent = label || "提交中…";
+      button.disabled = true;
+    } else {
+      button.textContent = button.dataset.label || "发布";
+      button.disabled = false;
+    }
+  }
 
+  function bind() {
+    syncAnonId();
     var form = doc.getElementById("post-form");
     if (form) form.setAttribute("novalidate", "novalidate");
 
@@ -344,7 +366,7 @@
     }
 
     if (form) {
-      form.addEventListener("submit", function (e) {
+      form.addEventListener("submit", async function (e) {
         e.preventDefault();
         var titleEl = doc.getElementById("post-title");
         var bodyEl = doc.getElementById("post-content");
@@ -357,39 +379,27 @@
           return;
         }
         if (text.length > MAX_TEXT) text = text.slice(0, MAX_TEXT);
-        var post = {
-          id: uid("p_"),
-          anon: getAnonId(),
-          cat: catEl ? catEl.value : "校园日常",
-          title: title,
-          text: text,
-          images: state.images.slice(),
-          createdAt: Date.now(),
-          status: "pending"
-        };
-        state.pending.unshift(post);
-        if (!savePending()) {
-          state.pending.shift();
-          return;
+        var button = form.querySelector(".composer__submit");
+        setBusy(button, true, "提交中…");
+        try {
+          await api("/v1/rdb/rest/rpc/create_community_post", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              p_anon_name: getAnonId(),
+              p_category: catEl ? catEl.value : "校园日常",
+              p_title: title,
+              p_content: text,
+              p_images: state.images.slice()
+            })
+          });
+          resetComposer();
+          toast("已提交审核，通过后才会公开");
+        } catch (err) {
+          toast("提交失败：" + (err && err.message ? err.message : "请稍后重试"));
+        } finally {
+          setBusy(button, false, "发布");
         }
-        resetComposer();
-        renderPending();
-        toast("已提交审核，通过后才会公开");
-        var pendingBox = doc.getElementById("pending-box");
-        if (pendingBox) pendingBox.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-
-    var pendingList = doc.getElementById("pending-list");
-    if (pendingList) {
-      pendingList.addEventListener("click", function (e) {
-        var btn = e.target.closest("[data-remove-pending]");
-        if (!btn) return;
-        var id = btn.getAttribute("data-remove-pending");
-        state.pending = state.pending.filter(function (item) { return item.id !== id; });
-        savePending();
-        renderPending();
-        toast("已从待审核列表删除");
       });
     }
 
@@ -414,21 +424,8 @@
     var list = doc.getElementById("post-list");
     if (list) {
       list.addEventListener("click", function (e) {
-        var like = e.target.closest("[data-like]");
-        if (like) {
-          var post = state.posts.find(function (p) { return p.id === like.getAttribute("data-like"); });
-          if (!post) return;
-          post.liked = !post.liked;
-          post.likes = Math.max(0, (post.likes || 0) + (post.liked ? 1 : -1));
-          savePosts(state.posts);
-          render();
-          return;
-        }
         var report = e.target.closest("[data-report]");
-        if (report) {
-          toast("已记录举报，管理员会尽快处理");
-          return;
-        }
+        if (report) { toast("举报已记录，管理员会尽快处理"); return; }
         var focusReply = e.target.closest("[data-focus-reply]");
         if (focusReply) {
           var article = focusReply.closest(".post");
@@ -440,25 +437,29 @@
         if (img) openLightbox(img.getAttribute("data-img"));
       });
 
-      list.addEventListener("submit", function (e) {
+      list.addEventListener("submit", async function (e) {
         var form = e.target.closest("[data-reply]");
         if (!form) return;
         e.preventDefault();
         var postId = form.getAttribute("data-reply");
-        var post = state.posts.find(function (p) { return p.id === postId; });
-        if (!post) return;
         var input = form.querySelector("input");
         var text = (input.value || "").trim();
         if (!text) { input.focus(); return; }
-        savePendingReply({
-          id: uid("pr_"),
-          postId: postId,
-          anon: getAnonId(),
-          text: text.slice(0, 200),
-          createdAt: Date.now()
-        });
-        input.value = "";
-        toast("回复已提交审核，通过后才会公开");
+        var button = form.querySelector("button");
+        setBusy(button, true, "提交中…");
+        try {
+          await api("/v1/rdb/rest/rpc/create_community_reply", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ p_post_id: postId, p_anon_name: getAnonId(), p_content: text })
+          });
+          input.value = "";
+          toast("回复已提交审核，通过后才会公开");
+        } catch (err) {
+          toast("回复失败：" + (err && err.message ? err.message : "请稍后重试"));
+        } finally {
+          setBusy(button, false, "回复");
+        }
       });
     }
 
@@ -472,19 +473,11 @@
       });
     }
 
-    window.addEventListener("storage", function (e) {
-      if (e.key === POSTS_KEY) {
-        state.posts = loadPosts();
-        render();
-      }
-      if (e.key === PENDING_KEY) {
-        state.pending = loadPending();
-        renderPending();
-      }
-      if (e.key === ID_KEY) syncAnonId();
-    });
+    var refresh = doc.getElementById("refresh-feed");
+    if (refresh) refresh.addEventListener("click", loadFeed);
 
-    render();
+    syncToolbar();
+    loadFeed();
   }
 
   function syncToolbar() {
@@ -518,7 +511,5 @@
     doc.body.classList.remove("is-locked");
   }
 
-  state.posts = loadPosts();
-  state.pending = loadPending();
   bind();
 })();
