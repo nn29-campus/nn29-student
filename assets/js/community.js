@@ -425,7 +425,7 @@
     if (list) {
       list.addEventListener("click", function (e) {
         var report = e.target.closest("[data-report]");
-        if (report) { toast("举报已记录，管理员会尽快处理"); return; }
+        if (report) { toast("举报功能还在建设中，请先联系管理员"); return; }
         var focusReply = e.target.closest("[data-focus-reply]");
         if (focusReply) {
           var article = focusReply.closest(".post");
