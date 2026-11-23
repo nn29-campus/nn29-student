@@ -162,15 +162,13 @@
   }
 
   function photoHtml(photo) {
-    var selected = photo.status === "selected";
     return '<article class="admin-photo" data-photo-id="' + esc(photo.id) + '">' +
       '<img src="' + esc(photo.preview_data) + '" alt="投稿预览" loading="lazy">' +
       '<div class="admin-photo__body">' +
-        '<div class="admin-photo__head"><strong>' + esc(photo.submitter || "匿名同学") + '</strong><span class="' + (selected ? "is-selected" : "") + '">' + (selected ? "已选中" : "待筛选") + '</span></div>' +
+        '<div class="admin-photo__head"><strong>' + esc(photo.submitter || "匿名同学") + '</strong><span>待审核</span></div>' +
         '<p>' + esc(photo.caption || "未写图片说明") + '</p>' +
         '<small>' + esc(photo.filename) + ' · ' + Math.round((photo.size_bytes || 0) / 1024) + ' KB · 原图</small>' +
         '<div class="admin-photo__actions">' +
-          '<button type="button" class="admin-approve" data-photo-status="' + (selected ? "pending" : "selected") + '">' + (selected ? "取消选中" : "选中展示") + '</button>' +
           '<button type="button" class="admin-download" data-download-photo="' + esc(photo.id) + '">下载原图</button>' +
           '<button type="button" class="admin-delete" data-delete-photo="' + esc(photo.id) + '">删除</button>' +
         '</div>' +
@@ -502,22 +500,6 @@
     var photoList = document.getElementById("admin-photo-list");
     if (photoList) {
       photoList.addEventListener("click", async function (e) {
-        var statusBtn = e.target.closest("[data-photo-status]");
-        if (statusBtn) {
-          var card = statusBtn.closest("[data-photo-id]");
-          var photoId = card.getAttribute("data-photo-id");
-          var next = statusBtn.getAttribute("data-photo-status");
-          statusBtn.disabled = true;
-          try {
-            await api("/v1/rdb/rest/rpc/admin_set_photo_status", { p_pass: state.pass, p_id: photoId, p_status: next });
-            await loadPhotos();
-            toast(next === "selected" ? "已选中，会出现在校园图片页" : "已取消选中");
-          } catch (err) {
-            statusBtn.disabled = false;
-            toast("操作失败：" + (err.message || "请稍后重试"));
-          }
-          return;
-        }
         var downloadBtn = e.target.closest("[data-download-photo]");
         if (downloadBtn) {
           var downloadId = downloadBtn.getAttribute("data-download-photo");
