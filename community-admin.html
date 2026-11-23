@@ -30,13 +30,13 @@
       </span>
     </a>
     <nav class="nav-main" aria-label="主导航">
-      <a href="index.html">首页</a><a href="about.html">学校概况</a><a href="news.html">新闻动态</a><a href="teaching.html">教学教研</a><a href="moral.html">德育园地</a><a href="community.html">同学讨论</a><a href="admissions.html">招生入学</a><a href="contact.html">联系我们</a>
+      <a href="index.html">首页</a><a href="about.html">学校概况</a><a href="news.html">新闻动态</a><a href="teaching.html">教学教研</a><a href="moral.html">德育园地</a><a href="community.html">同学讨论</a><a href="feedback.html">意见反馈</a>
     </nav>
     <div class="head-tools">
       <button class="icon-btn" type="button" data-search-open aria-label="站内搜索">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
       </button>
-      <a class="head-cta" href="admissions.html">招生咨询</a>
+      <a class="head-cta" href="about.html">了解学校</a>
       <button class="menu-btn" type="button" aria-label="打开菜单" aria-controls="drawer" aria-expanded="false">
         <span></span>
       </button>
@@ -46,11 +46,11 @@
 
 <aside class="nav-drawer" id="drawer" aria-hidden="true" aria-label="移动端导航">
   <nav class="drawer-nav" aria-label="移动端主导航">
-    <a href="index.html"><span>01</span>首页</a><a href="about.html"><span>02</span>学校概况</a><a href="news.html"><span>03</span>新闻动态</a><a href="teaching.html"><span>04</span>教学教研</a><a href="moral.html"><span>05</span>德育园地</a><a href="community.html"><span>06</span>同学讨论</a><a href="admissions.html"><span>07</span>招生入学</a><a href="contact.html"><span>08</span>联系我们</a>
+    <a href="index.html"><span>01</span>首页</a><a href="about.html"><span>02</span>学校概况</a><a href="news.html"><span>03</span>新闻动态</a><a href="teaching.html"><span>04</span>教学教研</a><a href="moral.html"><span>05</span>德育园地</a><a href="community.html"><span>06</span>同学讨论</a><a href="feedback.html"><span>07</span>意见反馈</a>
   </nav>
   <div class="drawer-foot">
-    <a class="btn btn--primary" href="admissions.html">招生咨询</a>
-    <p>南宁市青秀区金洲路26号<br><a href="tel:07715515000">0771-5515000</a></p>
+    <a class="btn btn--primary" href="about.html">了解学校</a>
+    <p>本站为在校学生设计作品<br>非学校官方发布渠道</p>
   </div>
 </aside>
 
@@ -62,7 +62,7 @@
     </div>
     <div class="search-field">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
-      <input type="search" placeholder="搜索新闻、招生、校园生活…" aria-label="输入搜索关键词" autocomplete="off">
+      <input type="search" placeholder="搜索新闻、校园生活、反馈…" aria-label="输入搜索关键词" autocomplete="off">
     </div>
     <p class="search-hint"></p>
     <div class="search-results"></div>
@@ -100,21 +100,65 @@
     </form>
 
     <div class="admin-panel" id="admin-panel" hidden>
-      <div class="admin-bar">
-        <div>
-          <span class="admin-bar__kicker">待审核</span>
-          <strong id="admin-count">0</strong>
+      <div class="admin-tabs" role="tablist" aria-label="审核台分区">
+        <button type="button" class="is-active" data-admin-tab="pending" aria-pressed="true">待审核 <span id="tab-pending-count">0</span></button>
+        <button type="button" data-admin-tab="posts" aria-pressed="false">帖子管理 <span id="tab-posts-count">0</span></button>
+        <button type="button" data-admin-tab="compose" aria-pressed="false">发布信息</button>
+      </div>
+
+      <div class="admin-pane" data-admin-panel="pending">
+        <div class="admin-bar">
+          <div>
+            <span class="admin-bar__kicker">待审核</span>
+            <strong id="admin-count">0</strong>
+          </div>
+          <div class="admin-bar__actions">
+            <button type="button" id="admin-refresh">刷新</button>
+            <button type="button" id="admin-logout">退出</button>
+          </div>
         </div>
-        <div class="admin-bar__actions">
-          <button type="button" id="admin-refresh">刷新</button>
-          <button type="button" id="admin-logout">退出</button>
+        <div class="admin-list" id="admin-list"></div>
+        <div class="admin-empty" id="admin-empty" hidden>
+          <strong>现在没有待审核内容。</strong>
+          <p>同学提交的新帖、回复和意见反馈会出现在这里。</p>
         </div>
       </div>
 
-      <div class="admin-list" id="admin-list"></div>
-      <div class="admin-empty" id="admin-empty" hidden>
-        <strong>现在没有待审核内容。</strong>
-        <p>同学提交的新帖和回复会出现在这里。</p>
+      <div class="admin-pane" data-admin-panel="posts" hidden>
+        <div class="admin-bar">
+          <div>
+            <span class="admin-bar__kicker">已通过帖子</span>
+            <strong id="admin-posts-count">0</strong>
+          </div>
+          <div class="admin-bar__actions">
+            <button type="button" id="admin-posts-refresh">刷新</button>
+          </div>
+        </div>
+        <div class="admin-list" id="admin-posts-list"></div>
+        <div class="admin-empty" id="admin-posts-empty" hidden>
+          <strong>还没有通过审核的帖子。</strong>
+          <p>审核通过后，帖子会出现在这里，可以随时删除。</p>
+        </div>
+      </div>
+
+      <div class="admin-pane" data-admin-panel="compose" hidden>
+        <form class="admin-compose" id="admin-compose-form">
+          <h2>以管理员身份发布</h2>
+          <p>发布后立即公开，显示“学生管理员 / 管理员”标识。适合活动通知、网站说明和需要统一告知的信息。</p>
+          <label class="admin-field"><span>标题</span><input id="admin-post-title" type="text" maxlength="60" placeholder="一句话说明这条信息"></label>
+          <label class="admin-field"><span>分类</span>
+            <select id="admin-post-category">
+              <option value="校园日常">校园日常</option>
+              <option value="学习互助">学习互助</option>
+              <option value="社团活动">社团活动</option>
+              <option value="失物招领">失物招领</option>
+              <option value="意见建议">意见建议</option>
+            </select>
+          </label>
+          <label class="admin-field"><span>内容</span><textarea id="admin-post-content" maxlength="800" placeholder="写清楚要告诉同学们的事情"></textarea></label>
+          <button class="btn btn--primary admin-submit" type="submit" id="admin-post-submit">发布信息</button>
+          <p class="admin-hint" id="admin-post-hint"></p>
+        </form>
       </div>
     </div>
   </div>
@@ -156,27 +200,27 @@
         </ul>
       </div>
       <div class="foot-col">
-        <h3>招生与联系</h3>
+        <h3>参与反馈</h3>
         <ul>
-          <li><a href="admissions.html">招生入学</a></li>
-          <li><a href="contact.html">联系我们</a></li>
-          <li>南宁市青秀区金洲路26号（市教育局旁）</li>
-          <li><a class="tel" href="tel:07715515000">0771-5515000</a></li>
+          <li><a href="feedback.html">意见反馈</a></li>
+          <li><a href="community.html">同学讨论</a></li>
+          <li><a href="index.html">首页</a></li>
         </ul>
       </div>
       <div class="foot-col">
-        <h3>关注学校</h3>
-        <div class="foot-qr">
-          <img src="assets/img/wechat-qr.png" alt="南宁市第二十九中学微信公众号二维码" loading="lazy">
-          <p>微信公众号<br>扫码关注校园动态</p>
-        </div>
+        <h3>关于本站</h3>
+        <ul>
+          <li>学生个人学习作品</li>
+          <li>非学校官方网站</li>
+          <li><a href="feedback.html">侵权与删除</a></li>
+        </ul>
       </div>
     </div>
     <div class="foot-bottom">
       <p>© <span data-year>2026</span> 南宁市第二十九中学 · 校园网站设计作品 · 非官方站点</p>
       <div class="links">
         <span>本站为在校学生设计作品，非学校官方发布渠道</span>
-        <a href="contact.html">联系我们</a>
+        <a href="feedback.html">意见反馈</a>
       </div>
     </div>
   </div>

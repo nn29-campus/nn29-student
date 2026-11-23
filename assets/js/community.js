@@ -144,6 +144,7 @@
       title: row.title || "",
       text: row.content || "",
       images: Array.isArray(row.images) ? row.images : [],
+      isAdmin: row.is_admin === true,
       createdAt: Date.parse(row.created_at) || Date.now(),
       replies: []
     };
@@ -154,7 +155,7 @@
     state.error = "";
     render();
     try {
-      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,created_at&status=eq.approved&order=created_at.desc&limit=50");
+      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,is_admin,created_at&status=eq.approved&order=created_at.desc&limit=50");
       var replies = await api("/v1/rdb/rest/community_replies?select=id,post_id,anon_name,content,created_at&status=eq.approved&order=created_at.asc&limit=300");
       var byPost = {};
       (replies || []).forEach(function (reply) {
@@ -200,7 +201,7 @@
     return '<article class="post" data-post="' + esc(post.id) + '">' +
       '<div class="post__head">' +
         '<span class="anon-avatar" style="background:' + avatarColor(post.anon) + '" aria-hidden="true">学</span>' +
-        '<div class="post__meta"><strong>' + esc(post.anon) + '</strong><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span></div>' +
+        '<div class="post__meta"><strong>' + esc(post.anon) + (post.isAdmin ? ' <span class="post__admin-badge">管理员</span>' : '') + '</strong><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span></div>' +
         '<button class="post__report" type="button" data-report="' + esc(post.id) + '">举报</button>' +
       '</div>' +
       (post.title ? '<h3 class="post__title">' + esc(post.title) + '</h3>' : "") +

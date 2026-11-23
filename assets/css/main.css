@@ -4448,6 +4448,116 @@ ol {
   }
 }
 
+
+.form-success {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: #eefaf1;
+  color: #1f6b3a;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.admin-item--feedback {
+  background: #fffdf7;
+  border-color: rgba(191, 128, 0, 0.16);
+}
+
+
+.post__admin-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #eef6ff;
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+
+
+.admin-tabs {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+.admin-tabs button {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 980px;
+  background: var(--bg-alt);
+  color: var(--muted);
+  font-size: 12px;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease);
+}
+.admin-tabs button span {
+  display: inline-block;
+  min-width: 16px;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  font-size: 10px;
+  text-align: center;
+}
+.admin-tabs button.is-active {
+  background: var(--blue);
+  color: #fff;
+}
+.admin-tabs button.is-active span {
+  background: rgba(255, 255, 255, 0.2);
+}
+.admin-pane {
+  margin-top: 12px;
+}
+.admin-compose {
+  padding: clamp(18px, 2.4vw, 26px);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: #fff;
+}
+.admin-compose h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.admin-compose > p {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.admin-compose .admin-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.admin-compose .admin-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  outline: 0;
+}
+.admin-compose .admin-submit {
+  width: auto;
+  padding: 9px 22px;
+}
+.admin-item__actions .admin-delete {
+  background: #fff1f0;
+  color: #b42318;
+}
+.admin-item__actions .admin-delete:hover {
+  background: #ffe1de;
+}
+
 @media print {
   .site-head,
   .site-foot,
