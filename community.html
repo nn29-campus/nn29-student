@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>同学讨论区｜南宁市第二十九中学</title>
-<meta name="description" content="南宁市第二十九中学同学讨论区：匿名发帖、回复，分享校园日常、学习互助、社团活动与有趣瞬间。">
+<meta name="description" content="南宁市第二十九中学同学讨论区：匿名发帖、先审后发，分享校园日常、学习互助、社团活动与有趣瞬间。">
 <meta name="theme-color" content="#ffffff">
 <meta name="format-detection" content="telephone=no">
 <meta property="og:type" content="website">
 <meta property="og:title" content="同学讨论区｜南宁市第二十九中学">
-<meta property="og:description" content="南宁市第二十九中学同学讨论区：匿名发帖、回复，分享校园日常、学习互助、社团活动与有趣瞬间。">
+<meta property="og:description" content="南宁市第二十九中学同学讨论区：匿名发帖、先审后发，分享校园日常、学习互助、社团活动与有趣瞬间。">
 <meta property="og:site_name" content="南宁市第二十九中学">
 <link rel="icon" href="assets/img/favicon.png" sizes="64x64">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
@@ -74,7 +74,7 @@
     <div class="community-hero__copy">
       <p class="eyebrow">同学讨论区 · COMMUNITY</p>
       <h1 class="h1">把校园里的话，<br>好好说出来。</h1>
-      <p class="community-hero__desc">匿名发帖，先发后审。聊课堂、聊社团、聊食堂，也分享你拍到的校园瞬间。</p>
+      <p class="community-hero__desc">匿名发帖，先审后发。聊课堂、聊社团、聊食堂，也分享你拍到的校园瞬间。</p>
     </div>
     <div class="community-id-card">
       <span class="community-id-card__label">你的匿名身份</span>
@@ -90,7 +90,7 @@
     <div class="community-main">
       <div class="community-demo-note" role="note">
         <strong>内测原型</strong>
-        <span>当前帖子只保存在你的浏览器，其他同学暂时看不到；接入后端后会变成真正的共享讨论区。</span>
+        <span>当前仅演示审核流程，帖子只保存在你的浏览器；接入后端后由管理员审核，通过后对所有同学展示。</span>
       </div>
 
       <form class="composer" id="post-form">
@@ -98,7 +98,7 @@
           <span class="anon-avatar" data-avatar aria-hidden="true">学</span>
           <div class="composer__who">
             <strong data-anon-name>学生······</strong>
-            <span>匿名发帖 · 先发后审</span>
+            <span>匿名发帖 · 先审后发</span>
           </div>
           <span class="composer__badge">匿名</span>
         </div>
@@ -127,8 +127,16 @@
             <button class="btn btn--primary composer__submit" type="submit">发布</button>
           </div>
         </div>
-        <p class="composer__note">先发后审：发布后立即展示，违规内容会被删除。请勿发布个人隐私、辱骂、广告或未经允许的同学照片。</p>
+        <p class="composer__note">先审后发：提交后进入审核队列，管理员通过后才会公开。请勿发布个人隐私、辱骂、广告或未经允许的同学照片。</p>
       </form>
+
+      <div class="pending-box" id="pending-box" hidden>
+        <div class="pending-box__head">
+          <strong>我的待审核</strong>
+          <span id="pending-count"></span>
+        </div>
+        <div class="pending-list" id="pending-list"></div>
+      </div>
 
       <div class="community-toolbar">
         <div class="community-tabs" role="tablist" aria-label="讨论分类">
@@ -153,8 +161,8 @@
       <div class="post-list" id="post-list"></div>
 
       <div class="community-empty" id="community-empty" hidden>
-        <strong>这里还很安静。</strong>
-        <p>发第一条吧，说不定就有人接你的话。</p>
+        <strong>还没有通过审核的帖子。</strong>
+        <p>你提交的内容会先进入审核队列，通过后才会出现在这里。</p>
       </div>
     </div>
 
@@ -170,9 +178,9 @@
         </ul>
       </div>
       <div class="side-card side-card--soft">
-        <span class="side-card__kicker">本周话题</span>
-        <strong>你在二十九中，<br>最喜欢哪个角落？</strong>
-        <p>操场看台、图书馆靠窗的位置，还是放学后的校门口？</p>
+        <span class="side-card__kicker">审核方式</span>
+        <strong>先审后发，<br>通过后才公开。</strong>
+        <p>管理员会检查隐私、辱骂、广告和图片授权；未通过的内容不会展示。</p>
       </div>
       <div class="side-card side-card--mini">
         <span>匿名编号</span>

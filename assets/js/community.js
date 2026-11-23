@@ -3,13 +3,16 @@
 
   var doc = document;
   var ID_KEY = "nn29_community_id_v1";
-  var POSTS_KEY = "nn29_community_posts_v1";
+  var POSTS_KEY = "nn29_community_posts_v2";
+  var PENDING_KEY = "nn29_community_pending_v1";
+  var PENDING_REPLIES_KEY = "nn29_community_pending_replies_v1";
   var MAX_IMAGES = 3;
   var MAX_TEXT = 800;
   var CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
   var state = {
     posts: [],
+    pending: [],
     cat: "all",
     sort: "latest",
     images: []
@@ -86,93 +89,59 @@
     return (d.getMonth() + 1) + "月" + d.getDate() + "日";
   }
 
-  function seedPosts() {
-    var now = Date.now();
-    return [
-      {
-        id: "seed-lost",
-        anon: "学生K7M2Q9",
-        cat: "失物招领",
-        title: "有人在操场看台捡到一副黑框眼镜吗？",
-        text: "今天下午最后一节体育课落在看台第二排了，镜腿上有白色贴纸。捡到的同学可以在这里回我，谢谢！",
-        images: [],
-        likes: 6,
-        liked: false,
-        createdAt: now - 26 * 60000,
-        replies: [
-          { id: "r1", anon: "学生A3F8N2", text: "刚才路过看台好像看到了，帮你放到体育器材室门口的值班台了。", createdAt: now - 18 * 60000 }
-        ]
-      },
-      {
-        id: "seed-sunset",
-        anon: "学生M4Q8T2",
-        cat: "校园日常",
-        title: "今天操场看台的晚霞",
-        text: "放学路过随手拍的。二十九中的天空有时候真的很像电影。",
-        images: ["assets/img/campus-sunset.webp"],
-        likes: 23,
-        liked: false,
-        createdAt: now - 2 * 3600000,
-        replies: [
-          { id: "r2", anon: "学生C9L5V1", text: "好看！我也拍到了，可惜跑慢了没赶上最红的时候。", createdAt: now - 80 * 60000 },
-          { id: "r3", anon: "学生H2W7B4", text: "这是在哪一层拍的？视角好棒。", createdAt: now - 42 * 60000 }
-        ]
-      },
-      {
-        id: "seed-study",
-        anon: "学生Q5N8D3",
-        cat: "学习互助",
-        title: "求推荐适合高一读的课外书",
-        text: "最近想利用晚自习前的时间读点书，除了必读名著，有没有那种读起来不累、又能学到东西的？小说、散文、科普都可以。",
-        images: [],
-        likes: 11,
-        liked: false,
-        createdAt: now - 5 * 3600000,
-        replies: [
-          { id: "r4", anon: "学生T6R2K9", text: "《人类简史》和《万物简史》都挺好读的，可以先从感兴趣的章节开始。", createdAt: now - 4 * 3600000 }
-        ]
-      },
-      {
-        id: "seed-club",
-        anon: "学生F8Y3J6",
-        cat: "社团活动",
-        title: "这学期社团招新大概什么时候？",
-        text: "想报篮球社和校园电视台，不知道会不会撞时间。有学长学姐知道大概安排吗？",
-        images: ["assets/img/campus-basketball.webp"],
-        likes: 9,
-        liked: false,
-        createdAt: now - 8 * 3600000,
-        replies: [
-          { id: "r5", anon: "学生B4C7X2", text: "一般开学第三周，电视台会在周一和周三下午活动，篮球社是周二周四，应该不冲突。", createdAt: now - 7 * 3600000 }
-        ]
-      },
-      {
-        id: "seed-canteen",
-        anon: "学生V2G9P5",
-        cat: "校园日常",
-        title: "食堂二楼的新窗口有人试过吗？",
-        text: "中午看到排了好长的队，不知道值不值得等。吃过的同学来分享一下。",
-        images: [],
-        likes: 14,
-        liked: false,
-        createdAt: now - 11 * 3600000,
-        replies: []
-      }
-    ];
-  }
-
   function loadPosts() {
     var raw = "";
     try { raw = localStorage.getItem(POSTS_KEY) || ""; } catch (e) {}
-    if (raw) {
-      try {
-        var parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {}
+    if (!raw) return [];
+    try {
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
     }
-    var seeded = seedPosts();
-    savePosts(seeded);
-    return seeded;
+  }
+
+  function loadPending() {
+    var raw = "";
+    try { raw = localStorage.getItem(PENDING_KEY) || ""; } catch (e) {}
+    if (!raw) return [];
+    try {
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function savePending() {
+    try {
+      localStorage.setItem(PENDING_KEY, JSON.stringify(state.pending));
+      return true;
+    } catch (e) {
+      toast("本机存储空间不足，请减少图片后再试");
+      return false;
+    }
+  }
+
+  function loadPendingReplies() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(PENDING_REPLIES_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function savePendingReply(reply) {
+    var list = loadPendingReplies();
+    list.unshift(reply);
+    try {
+      localStorage.setItem(PENDING_REPLIES_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      toast("本机存储空间不足，回复暂未保存");
+      return false;
+    }
   }
 
   function savePosts(posts) {
@@ -236,7 +205,33 @@
     return posts;
   }
 
+  function renderPending() {
+    var box = doc.getElementById("pending-box");
+    var list = doc.getElementById("pending-list");
+    var count = doc.getElementById("pending-count");
+    if (!box || !list) return;
+    var pending = state.pending || [];
+    if (!pending.length) {
+      box.hidden = true;
+      list.innerHTML = "";
+      return;
+    }
+    box.hidden = false;
+    if (count) count.textContent = pending.length + " 条";
+    list.innerHTML = pending.map(function (post) {
+      return '<div class="pending-item">' +
+        '<div class="pending-item__head"><strong>' + esc(post.title || "无标题") + '</strong><span>审核中</span></div>' +
+        (post.text ? '<p>' + nl2br(post.text) + '</p>' : "") +
+        (post.images && post.images.length ? '<div class="pending-item__images">' + post.images.map(function (src) {
+          return '<img src="' + esc(src) + '" alt="待审核图片">';
+        }).join("") + "</div>" : "") +
+        '<div class="pending-item__foot"><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span><button type="button" data-remove-pending="' + esc(post.id) + '">删除</button></div>' +
+      '</div>';
+    }).join("");
+  }
+
   function render() {
+    renderPending();
     var list = doc.getElementById("post-list");
     var empty = doc.getElementById("community-empty");
     var count = doc.getElementById("post-count");
@@ -369,24 +364,32 @@
           title: title,
           text: text,
           images: state.images.slice(),
-          likes: 0,
-          liked: false,
           createdAt: Date.now(),
-          replies: []
+          status: "pending"
         };
-        state.posts.unshift(post);
-        if (!savePosts(state.posts)) {
-          state.posts.shift();
+        state.pending.unshift(post);
+        if (!savePending()) {
+          state.pending.shift();
           return;
         }
-        state.cat = "all";
-        state.sort = "latest";
-        syncToolbar();
         resetComposer();
-        render();
-        toast("已发布 · 管理员会事后审核");
-        var feed = doc.getElementById("post-list");
-        if (feed) feed.scrollIntoView({ behavior: "smooth", block: "start" });
+        renderPending();
+        toast("已提交审核，通过后才会公开");
+        var pendingBox = doc.getElementById("pending-box");
+        if (pendingBox) pendingBox.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+
+    var pendingList = doc.getElementById("pending-list");
+    if (pendingList) {
+      pendingList.addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-remove-pending]");
+        if (!btn) return;
+        var id = btn.getAttribute("data-remove-pending");
+        state.pending = state.pending.filter(function (item) { return item.id !== id; });
+        savePending();
+        renderPending();
+        toast("已从待审核列表删除");
       });
     }
 
@@ -447,11 +450,15 @@
         var input = form.querySelector("input");
         var text = (input.value || "").trim();
         if (!text) { input.focus(); return; }
-        post.replies = post.replies || [];
-        post.replies.push({ id: uid("r_"), anon: getAnonId(), text: text.slice(0, 200), createdAt: Date.now() });
-        savePosts(state.posts);
-        render();
-        toast("回复成功");
+        savePendingReply({
+          id: uid("pr_"),
+          postId: postId,
+          anon: getAnonId(),
+          text: text.slice(0, 200),
+          createdAt: Date.now()
+        });
+        input.value = "";
+        toast("回复已提交审核，通过后才会公开");
       });
     }
 
@@ -469,6 +476,10 @@
       if (e.key === POSTS_KEY) {
         state.posts = loadPosts();
         render();
+      }
+      if (e.key === PENDING_KEY) {
+        state.pending = loadPending();
+        renderPending();
       }
       if (e.key === ID_KEY) syncAnonId();
     });
@@ -508,5 +519,6 @@
   }
 
   state.posts = loadPosts();
+  state.pending = loadPending();
   bind();
 })();
