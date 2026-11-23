@@ -336,6 +336,52 @@
     }
   }
 
+
+  /* ---------- 首页免责声明 ---------- */
+  var siteNotice = doc.getElementById("site-notice");
+  if (siteNotice) {
+    var noticeAck = doc.getElementById("site-notice-ack");
+    var noticeKey = "nn29_site_notice_ack_v1";
+    var noticeSeen = false;
+    try { noticeSeen = sessionStorage.getItem(noticeKey) === "1"; } catch (e) {}
+
+    function openNotice() {
+      siteNotice.hidden = false;
+      siteNotice.setAttribute("aria-hidden", "false");
+      doc.body.classList.add("is-locked");
+      requestAnimationFrame(function () {
+        siteNotice.classList.add("is-on");
+        if (noticeAck) noticeAck.focus();
+      });
+    }
+
+    function closeNotice() {
+      siteNotice.classList.remove("is-on");
+      siteNotice.setAttribute("aria-hidden", "true");
+      doc.body.classList.remove("is-locked");
+      try { sessionStorage.setItem(noticeKey, "1"); } catch (e) {}
+      setTimeout(function () { siteNotice.hidden = true; }, 360);
+    }
+
+    if (noticeAck) noticeAck.addEventListener("click", closeNotice);
+    siteNotice.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+      var focusables = siteNotice.querySelectorAll("button, a[href]");
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (e.shiftKey && doc.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && doc.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
+    if (!noticeSeen) openNotice();
+  }
+
   /* ---------- 通知轮播 ---------- */
   var noticeList = doc.querySelector(".notice-list");
   if (noticeList) {

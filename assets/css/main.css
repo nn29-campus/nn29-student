@@ -4337,6 +4337,117 @@ ol {
   color: var(--muted);
 }
 
+
+/* ---------- 23. 首页免责声明公告 ---------- */
+.site-notice {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 10, 18, 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s var(--ease), visibility 0.35s var(--ease);
+}
+.site-notice.is-on {
+  opacity: 1;
+  visibility: visible;
+}
+.site-notice__backdrop {
+  position: absolute;
+  inset: 0;
+}
+.site-notice__card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 560px);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: clamp(22px, 4vw, 32px);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.45);
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.4s var(--ease);
+}
+.site-notice.is-on .site-notice__card {
+  transform: none;
+}
+.site-notice__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #fff4e5;
+  color: #8a4b00;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.site-notice__card h2 {
+  margin-top: 13px;
+  font-size: clamp(22px, 3.2vw, 27px);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.site-notice__body {
+  margin-top: 12px;
+}
+.site-notice__body p {
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.site-notice__body strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.site-notice__small {
+  color: var(--muted-2) !important;
+  font-size: 11px !important;
+}
+.site-notice__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+.site-notice__ack {
+  flex: 1;
+  justify-content: center;
+}
+.site-notice__link {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--blue);
+}
+.site-notice__link:hover {
+  text-decoration: underline;
+}
+@media (max-width: 480px) {
+  .site-notice {
+    padding: 12px;
+  }
+  .site-notice__card {
+    padding: 20px 18px;
+    border-radius: 20px;
+  }
+  .site-notice__body p {
+    font-size: 12px;
+  }
+  .site-notice__actions {
+    gap: 12px;
+  }
+}
+
 @media print {
   .site-head,
   .site-foot,
