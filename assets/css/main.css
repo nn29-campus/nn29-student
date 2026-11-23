@@ -4919,6 +4919,120 @@ ol {
   cursor: wait;
 }
 
+
+/* ---------- A · 清透蓝雾：渐变点缀 ---------- */
+@font-face {
+  font-family: "Noto Serif SC Brand";
+  src: url("../fonts/noto-serif-sc-brand.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+.brand {
+  gap: 14px;
+}
+.brand-text strong {
+  font-family: "Noto Serif SC Brand", "Noto Serif CJK SC", "Songti SC",
+    "STSong", "SimSun", serif;
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+}
+.brand-text em {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 7px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+  margin-top: 4px;
+}
+.site-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 113, 227, 0),
+    rgba(0, 180, 255, 0.5) 38%,
+    rgba(90, 200, 250, 0.3) 68%,
+    rgba(0, 113, 227, 0)
+  );
+}
+.hero {
+  background: radial-gradient(
+      58% 45% at 50% -8%,
+      rgba(41, 151, 255, 0.16),
+      transparent 72%
+    ),
+    radial-gradient(
+      38% 28% at 4% 28%,
+      rgba(100, 210, 255, 0.15),
+      transparent 72%
+    ),
+    radial-gradient(
+      30% 25% at 100% 18%,
+      rgba(160, 220, 255, 0.12),
+      transparent 72%
+    ),
+    #fff;
+}
+.hero h1 .grad {
+  background: linear-gradient(100deg, #0a84ff 0%, #00b4ff 55%, #5ac8fa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.btn--primary {
+  background: linear-gradient(135deg, #0071e3 0%, #2c9cff 55%, #64c8ff 100%);
+  box-shadow: 0 10px 26px -12px rgba(0, 113, 227, 0.72);
+}
+.btn--primary:hover {
+  background: linear-gradient(135deg, #0068d6 0%, #1d94ff 55%, #59c3ff 100%);
+}
+.head-cta {
+  background: linear-gradient(135deg, #0071e3 0%, #2c9cff 60%, #64c8ff 100%);
+}
+.head-cta:hover {
+  background: linear-gradient(135deg, #0068d6 0%, #1d94ff 60%, #59c3ff 100%);
+}
+.official-badge {
+  background: linear-gradient(135deg, #e9f4ff, #dff0ff);
+  border-color: rgba(0, 113, 227, 0.22);
+}
+.community-entry {
+  background: linear-gradient(135deg, #0066d6 0%, #168cff 55%, #43b6ff 100%);
+}
+.photo-entry {
+  background: linear-gradient(135deg, #ffffff 0%, #f2f9ff 60%, #e7f4ff 100%);
+  border-color: rgba(0, 113, 227, 0.25);
+}
+.photo-entry__icon {
+  background: linear-gradient(135deg, #e4f3ff, #d6ecff);
+}
+@media (max-width: 640px) {
+  .brand {
+    gap: 10px;
+  }
+  .brand-mark {
+    width: 40px;
+    height: 27px;
+  }
+  .brand-text strong {
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+  }
+  .brand-text em {
+    font-size: 6.5px;
+    letter-spacing: 0.18em;
+    margin-top: 3px;
+  }
+}
+
 @media print {
   .site-head,
   .site-foot,
