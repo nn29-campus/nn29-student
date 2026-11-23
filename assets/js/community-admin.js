@@ -118,12 +118,13 @@
   }
 
   function feedbackHtml(item) {
+    var done = item.status === "resolved";
     return '<article class="admin-item admin-item--feedback" data-kind="feedback" data-id="' + esc(item.id) + '">' +
-      '<div class="admin-item__head"><div><span class="admin-type">反馈</span><strong>' + esc(item.category) + '</strong></div><time>' + esc(timeAgo(item.created_at)) + '</time></div>' +
+      '<div class="admin-item__head"><div><span class="admin-type">反馈</span><strong>' + esc(item.category) + (done ? ' <span class="admin-done-badge">已处理</span>' : '') + '</strong></div><time>' + esc(timeAgo(item.created_at)) + '</time></div>' +
       '<p>' + nl2br(item.content) + '</p>' +
       '<div class="admin-item__meta">' + (item.contact ? "联系方式：" + esc(item.contact) : "未留联系方式") + '</div>' +
       '<div class="admin-item__actions">' +
-        '<button type="button" class="admin-approve" data-action="resolve">标记已处理</button>' +
+        (done ? '' : '<button type="button" class="admin-approve" data-action="resolve">标记已处理</button>') +
         '<button type="button" class="admin-reject" data-action="delete">删除</button>' +
       '</div>' +
     '</article>';
