@@ -3947,6 +3947,16 @@ ol {
   font-weight: 600;
   letter-spacing: 0.01em;
 }
+.community-entry__badge {
+  display: inline-block;
+  margin-left: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 9px;
+  font-weight: 500;
+  vertical-align: 1px;
+}
 .community-entry__text small {
   font-size: 11px;
   line-height: 1.5;
