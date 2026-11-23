@@ -198,10 +198,12 @@
   }
 
   function postHtml(post) {
-    return '<article class="post" data-post="' + esc(post.id) + '">' +
+    var displayName = post.isAdmin ? "网站管理员" : post.anon;
+    return '<article class="post' + (post.isAdmin ? " post--admin" : "") + '" data-post="' + esc(post.id) + '">' +
+      (post.isAdmin ? '<div class="post__admin-note">网站公告 · 由网站管理员直接发布</div>' : "") +
       '<div class="post__head">' +
-        '<span class="anon-avatar" style="background:' + avatarColor(post.anon) + '" aria-hidden="true">学</span>' +
-        '<div class="post__meta"><strong>' + esc(post.anon) + (post.isAdmin ? ' <span class="post__admin-badge">管理员</span>' : '') + '</strong><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span></div>' +
+        '<span class="anon-avatar' + (post.isAdmin ? " anon-avatar--admin" : "") + '" style="background:' + (post.isAdmin ? "linear-gradient(135deg,#0b63c5,#6bc2ff)" : avatarColor(post.anon)) + '" aria-hidden="true">' + (post.isAdmin ? "站" : "学") + '</span>' +
+        '<div class="post__meta"><strong>' + esc(displayName) + (post.isAdmin ? ' <span class="post__admin-badge">网站公告</span>' : '') + '</strong><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span></div>' +
         '<button class="post__report" type="button" data-report="' + esc(post.id) + '">举报</button>' +
       '</div>' +
       (post.title ? '<h3 class="post__title">' + esc(post.title) + '</h3>' : "") +

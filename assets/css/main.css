@@ -4464,17 +4464,7 @@ ol {
 }
 
 
-.post__admin-badge {
-  display: inline-block;
-  margin-left: 4px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: #eef6ff;
-  color: var(--blue);
-  font-size: 9px;
-  font-weight: 600;
-  vertical-align: 1px;
-}
+
 
 
 .admin-tabs {
@@ -4556,6 +4546,51 @@ ol {
 }
 .admin-item__actions .admin-delete:hover {
   background: #ffe1de;
+}
+
+
+.post--admin {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(0, 113, 227, 0.28);
+  background: linear-gradient(135deg, #f3f9ff 0%, #ffffff 75%);
+  box-shadow: 0 14px 34px -28px rgba(0, 82, 170, 0.55);
+}
+.post--admin::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #0071e3, #6bc2ff);
+}
+.post__admin-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #e6f2ff;
+  color: #0059b8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.post__admin-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--blue);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+.anon-avatar--admin {
+  color: #fff;
 }
 
 @media print {

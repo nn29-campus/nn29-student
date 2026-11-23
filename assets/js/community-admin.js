@@ -131,7 +131,7 @@
 
   function approvedHtml(post) {
     return '<article class="admin-item" data-approved-id="' + esc(post.id) + '">' +
-      '<div class="admin-item__head"><div><span class="admin-type">已通过</span><strong>' + esc(post.anon_name) + (post.is_admin ? ' · 管理员' : '') + '</strong></div><time>' + esc(timeAgo(post.created_at)) + '</time></div>' +
+      '<div class="admin-item__head"><div><span class="admin-type">已通过</span><strong>' + esc(post.anon_name) + (post.is_admin ? ' · 网站管理员' : '') + '</strong></div><time>' + esc(timeAgo(post.created_at)) + '</time></div>' +
       (post.title ? '<h3>' + esc(post.title) + '</h3>' : "") +
       '<p>' + nl2br(post.content) + '</p>' +
       imageHtml(post.images) +
