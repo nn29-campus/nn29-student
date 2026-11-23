@@ -103,6 +103,7 @@
       <div class="admin-tabs" role="tablist" aria-label="审核台分区">
         <button type="button" class="is-active" data-admin-tab="pending" aria-pressed="true">待审核 <span id="tab-pending-count">0</span></button>
         <button type="button" data-admin-tab="posts" aria-pressed="false">帖子管理 <span id="tab-posts-count">0</span></button>
+        <button type="button" data-admin-tab="feedback" aria-pressed="false">意见反馈 <span id="tab-feedback-count">0</span></button>
         <button type="button" data-admin-tab="compose" aria-pressed="false">发布信息</button>
       </div>
 
@@ -138,6 +139,23 @@
         <div class="admin-empty" id="admin-posts-empty" hidden>
           <strong>还没有通过审核的帖子。</strong>
           <p>审核通过后，帖子会出现在这里，可以随时删除。</p>
+        </div>
+      </div>
+
+      <div class="admin-pane" data-admin-panel="feedback" hidden>
+        <div class="admin-bar">
+          <div>
+            <span class="admin-bar__kicker">意见反馈</span>
+            <strong id="admin-feedback-count">0</strong>
+          </div>
+          <div class="admin-bar__actions">
+            <button type="button" id="admin-feedback-refresh">刷新</button>
+          </div>
+        </div>
+        <div class="admin-list" id="admin-feedback-list"></div>
+        <div class="admin-empty" id="admin-feedback-empty" hidden>
+          <strong>还没有新的意见反馈。</strong>
+          <p>同学提交的意见、纠错和版权问题会出现在这里。</p>
         </div>
       </div>
 

@@ -164,7 +164,7 @@
     var list = document.getElementById("admin-list");
     var empty = document.getElementById("admin-empty");
     var count = document.getElementById("admin-count");
-    var total = state.posts.length + state.replies.length + state.feedback.length;
+    var total = state.posts.length + state.replies.length;
     if (count) count.textContent = total;
     var tabPending = document.getElementById("tab-pending-count");
     if (tabPending) tabPending.textContent = total;
@@ -174,7 +174,21 @@
       if (empty) empty.hidden = true;
       return;
     }
-    list.innerHTML = state.posts.map(postHtml).join("") + state.replies.map(replyHtml).join("") + state.feedback.map(feedbackHtml).join("");
+    list.innerHTML = state.posts.map(postHtml).join("") + state.replies.map(replyHtml).join("");
+    renderFeedback();
+    if (empty) empty.hidden = total !== 0;
+  }
+
+  function renderFeedback() {
+    var list = document.getElementById("admin-feedback-list");
+    var empty = document.getElementById("admin-feedback-empty");
+    var count = document.getElementById("admin-feedback-count");
+    var tabCount = document.getElementById("tab-feedback-count");
+    var total = state.feedback.length;
+    if (count) count.textContent = total;
+    if (tabCount) tabCount.textContent = total;
+    if (!list) return;
+    list.innerHTML = state.feedback.map(feedbackHtml).join("");
     if (empty) empty.hidden = total !== 0;
   }
 
@@ -254,6 +268,8 @@
     if (refresh) refresh.addEventListener("click", loadPending);
     var postsRefresh = document.getElementById("admin-posts-refresh");
     if (postsRefresh) postsRefresh.addEventListener("click", loadApproved);
+    var feedbackRefresh = document.getElementById("admin-feedback-refresh");
+    if (feedbackRefresh) feedbackRefresh.addEventListener("click", loadPending);
 
     var tabs = document.querySelectorAll("[data-admin-tab]");
     Array.prototype.forEach.call(tabs, function (tab) {
@@ -397,6 +413,32 @@
         var active = tab.getAttribute("data-admin-tab") === name;
         tab.classList.toggle("is-active", active);
         tab.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+    }
+
+    var feedbackList = document.getElementById("admin-feedback-list");
+    if (feedbackList) {
+      feedbackList.addEventListener("click", async function (e) {
+        var btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        var item = btn.closest(".admin-item");
+        if (!item) return;
+        var id = item.getAttribute("data-id");
+        var action = btn.getAttribute("data-action");
+        var status = action === "resolve" ? "resolved" : "deleted";
+        if (action === "delete" && !window.confirm("删除这条反馈？删除后后台不再显示。")) return;
+        var buttons = item.querySelectorAll("button");
+        Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+        try {
+          await api("/v1/rdb/rest/rpc/admin_moderate", { p_pass: state.pass, p_kind: "feedback", p_id: id, p_status: status });
+          state.feedback = state.feedback.filter(function (f) { return f.id !== id; });
+          item.remove();
+          renderFeedback();
+          toast(status === "resolved" ? "反馈已标记为已处理" : "反馈已删除");
+        } catch (err) {
+          Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+          toast("操作失败：" + (err.message || "请稍后重试"));
+        }
       });
     }
 
