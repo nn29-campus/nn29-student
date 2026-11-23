@@ -146,6 +146,8 @@
       images: Array.isArray(row.images) ? row.images : [],
       isAdmin: row.is_admin === true,
       isPinned: row.is_pinned === true,
+      likes: Number(row.like_count) || 0,
+      liked: false,
       createdAt: Date.parse(row.created_at) || Date.now(),
       replies: []
     };
@@ -156,7 +158,7 @@
     state.error = "";
     render();
     try {
-      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,is_admin,is_pinned,created_at&status=eq.approved&order=is_pinned.desc,created_at.desc&limit=50");
+      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,is_admin,is_pinned,like_count,created_at&status=eq.approved&order=is_pinned.desc,created_at.desc&limit=50");
       var replies = await api("/v1/rdb/rest/community_replies?select=id,post_id,anon_name,content,created_at&status=eq.approved&order=created_at.asc&limit=300");
       var byPost = {};
       (replies || []).forEach(function (reply) {
@@ -169,9 +171,23 @@
           createdAt: Date.parse(reply.created_at) || Date.now()
         });
       });
+      var likeMap = {};
+      try {
+        var likes = await api("/v1/rdb/rest/rpc/get_post_likes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ p_device_id: getDeviceId() })
+        });
+        (likes || []).forEach(function (item) { likeMap[item.post_id] = item; });
+      } catch (e) {}
       state.posts = (posts || []).map(function (row) {
         var post = normalizePost(row);
         post.replies = byPost[post.id] || [];
+        var like = likeMap[post.id];
+        if (like) {
+          post.likes = Number(like.like_count) || 0;
+          post.liked = like.liked === true;
+        }
         return post;
       });
     } catch (err) {
@@ -211,6 +227,10 @@
       (post.text ? '<p class="post__text">' + nl2br(post.text) + '</p>' : "") +
       postImagesHtml(post.images) +
       '<div class="post__foot">' +
+        '<button class="post__like' + (post.liked ? " is-liked" : "") + '" type="button" data-like="' + esc(post.id) + '" aria-pressed="' + (post.liked ? "true" : "false") + '" aria-label="点赞">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8Z"/></svg>' +
+          '<span>' + (post.liked ? "已赞" : "点赞") + '</span> <b>' + post.likes + '</b>' +
+        '</button>' +
         '<button type="button" data-focus-reply="' + esc(post.id) + '">回复 ' + ((post.replies || []).length || "") + '</button>' +
       '</div>' +
       '<div class="replies">' + repliesHtml(post) + '</div>' +
@@ -322,6 +342,30 @@
     }
   }
 
+  async function handleLike(button) {
+    var id = button.getAttribute("data-like");
+    var post = state.posts.filter(function (item) { return item.id === id; })[0];
+    if (!post || button.disabled) return;
+    button.disabled = true;
+    try {
+      var result = await api("/v1/rdb/rest/rpc/toggle_post_like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ p_post_id: id, p_device_id: getDeviceId() })
+      });
+      post.liked = result.liked === true;
+      post.likes = Number(result.count) || 0;
+      button.classList.toggle("is-liked", post.liked);
+      button.setAttribute("aria-pressed", post.liked ? "true" : "false");
+      button.querySelector("span").textContent = post.liked ? "已赞" : "点赞";
+      button.querySelector("b").textContent = post.likes;
+    } catch (err) {
+      toast("点赞失败：" + (err && err.message ? err.message : "请稍后重试"));
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   function bind() {
     syncAnonId();
     var form = doc.getElementById("post-form");
@@ -428,6 +472,11 @@
     var list = doc.getElementById("post-list");
     if (list) {
       list.addEventListener("click", function (e) {
+        var like = e.target.closest("[data-like]");
+        if (like) {
+          handleLike(like);
+          return;
+        }
         var report = e.target.closest("[data-report]");
         if (report) { toast("举报功能还在建设中，请先联系管理员"); return; }
         var focusReply = e.target.closest("[data-focus-reply]");

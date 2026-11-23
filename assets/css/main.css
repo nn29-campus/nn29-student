@@ -4906,6 +4906,19 @@ ol {
   }
 }
 
+
+.post__like b {
+  font-weight: 600;
+  font-size: 10.5px;
+}
+.post__like.is-liked svg {
+  fill: currentColor;
+}
+.post__like:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 @media print {
   .site-head,
   .site-foot,
