@@ -4,7 +4,7 @@
   var API_BASE = "https://subtle-galliform-d9e89d1ceff81bc.api.tcloudbasegateway.com";
   var PASS_KEY = "nn29_admin_pass";
   var DEVICE_KEY = "nn29_admin_device_v1";
-  var state = { token: "", pass: "", loading: false, approvedLoading: false, posts: [], replies: [], feedback: [], approved: [], tab: "pending" };
+  var state = { token: "", pass: "", loading: false, approvedLoading: false, photosLoading: false, posts: [], replies: [], feedback: [], approved: [], photos: [], tab: "pending" };
 
   function esc(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
@@ -161,6 +161,41 @@
     if (empty) empty.hidden = state.approved.length !== 0;
   }
 
+  function photoHtml(photo) {
+    var selected = photo.status === "selected";
+    return '<article class="admin-photo" data-photo-id="' + esc(photo.id) + '">' +
+      '<img src="' + esc(photo.preview_data) + '" alt="投稿预览" loading="lazy">' +
+      '<div class="admin-photo__body">' +
+        '<div class="admin-photo__head"><strong>' + esc(photo.submitter || "匿名同学") + '</strong><span class="' + (selected ? "is-selected" : "") + '">' + (selected ? "已选中" : "待筛选") + '</span></div>' +
+        '<p>' + esc(photo.caption || "未写图片说明") + '</p>' +
+        '<small>' + esc(photo.filename) + ' · ' + Math.round((photo.size_bytes || 0) / 1024) + ' KB · 原图</small>' +
+        '<div class="admin-photo__actions">' +
+          '<button type="button" class="admin-approve" data-photo-status="' + (selected ? "pending" : "selected") + '">' + (selected ? "取消选中" : "选中展示") + '</button>' +
+          '<button type="button" class="admin-download" data-download-photo="' + esc(photo.id) + '">下载原图</button>' +
+          '<button type="button" class="admin-delete" data-delete-photo="' + esc(photo.id) + '">删除</button>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function renderPhotos() {
+    var list = document.getElementById("admin-photo-list");
+    var empty = document.getElementById("admin-photo-empty");
+    var count = document.getElementById("admin-photos-count");
+    var tabCount = document.getElementById("tab-photos-count");
+    var total = state.photos.length;
+    if (count) count.textContent = total;
+    if (tabCount) tabCount.textContent = total;
+    if (!list) return;
+    if (state.photosLoading) {
+      list.innerHTML = '<div class="admin-loading">正在读取投稿…</div>';
+      if (empty) empty.hidden = true;
+      return;
+    }
+    list.innerHTML = state.photos.map(photoHtml).join("");
+    if (empty) empty.hidden = total !== 0;
+  }
+
   function render() {
     var list = document.getElementById("admin-list");
     var empty = document.getElementById("admin-empty");
@@ -235,6 +270,22 @@
     }
   }
 
+  async function loadPhotos() {
+    if (!state.pass) return;
+    state.photosLoading = true;
+    renderPhotos();
+    try {
+      var data = await api("/v1/rdb/rest/rpc/admin_list_photos", { p_pass: state.pass });
+      state.photos = Array.isArray(data) ? data : [];
+    } catch (err) {
+      state.photos = [];
+      toast("读取图片投稿失败：" + (err.message || "请稍后重试"));
+    } finally {
+      state.photosLoading = false;
+      renderPhotos();
+    }
+  }
+
   function showLogin(message) {
     document.getElementById("admin-login").hidden = false;
     document.getElementById("admin-panel").hidden = true;
@@ -262,6 +313,7 @@
         showPanel();
         loadPending();
         loadApproved();
+        loadPhotos();
       });
     }
 
@@ -271,12 +323,15 @@
     if (postsRefresh) postsRefresh.addEventListener("click", loadApproved);
     var feedbackRefresh = document.getElementById("admin-feedback-refresh");
     if (feedbackRefresh) feedbackRefresh.addEventListener("click", loadPending);
+    var photosRefresh = document.getElementById("admin-photos-refresh");
+    if (photosRefresh) photosRefresh.addEventListener("click", loadPhotos);
 
     var tabs = document.querySelectorAll("[data-admin-tab]");
     Array.prototype.forEach.call(tabs, function (tab) {
       tab.addEventListener("click", function () {
         switchTab(tab.getAttribute("data-admin-tab"));
         if (tab.getAttribute("data-admin-tab") === "posts") loadApproved();
+        if (tab.getAttribute("data-admin-tab") === "photos") loadPhotos();
       });
     });
 
@@ -288,6 +343,7 @@
         state.replies = [];
         state.feedback = [];
         state.approved = [];
+        state.photos = [];
         sessionStorage.removeItem(PASS_KEY);
         showLogin("已退出审核台。");
       });
@@ -443,6 +499,65 @@
       });
     }
 
+    var photoList = document.getElementById("admin-photo-list");
+    if (photoList) {
+      photoList.addEventListener("click", async function (e) {
+        var statusBtn = e.target.closest("[data-photo-status]");
+        if (statusBtn) {
+          var card = statusBtn.closest("[data-photo-id]");
+          var photoId = card.getAttribute("data-photo-id");
+          var next = statusBtn.getAttribute("data-photo-status");
+          statusBtn.disabled = true;
+          try {
+            await api("/v1/rdb/rest/rpc/admin_set_photo_status", { p_pass: state.pass, p_id: photoId, p_status: next });
+            await loadPhotos();
+            toast(next === "selected" ? "已选中，会出现在校园图片页" : "已取消选中");
+          } catch (err) {
+            statusBtn.disabled = false;
+            toast("操作失败：" + (err.message || "请稍后重试"));
+          }
+          return;
+        }
+        var downloadBtn = e.target.closest("[data-download-photo]");
+        if (downloadBtn) {
+          var downloadId = downloadBtn.getAttribute("data-download-photo");
+          downloadBtn.disabled = true;
+          downloadBtn.textContent = "读取中…";
+          try {
+            var original = await api("/v1/rdb/rest/rpc/admin_get_photo_original", { p_pass: state.pass, p_id: downloadId });
+            var link = document.createElement("a");
+            link.href = original.image_data;
+            link.download = original.filename || "photo.jpg";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast("已开始下载原图");
+          } catch (err) {
+            toast("下载失败：" + (err.message || "请稍后重试"));
+          } finally {
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = "下载原图";
+          }
+          return;
+        }
+        var deleteBtn = e.target.closest("[data-delete-photo]");
+        if (deleteBtn) {
+          if (!window.confirm("删除这张投稿？原图也会一起删除，无法恢复。")) return;
+          var deleteId = deleteBtn.getAttribute("data-delete-photo");
+          deleteBtn.disabled = true;
+          try {
+            await api("/v1/rdb/rest/rpc/admin_delete_photo", { p_pass: state.pass, p_id: deleteId });
+            state.photos = state.photos.filter(function (p) { return p.id !== deleteId; });
+            renderPhotos();
+            toast("投稿已删除");
+          } catch (err) {
+            deleteBtn.disabled = false;
+            toast("删除失败：" + (err.message || "请稍后重试"));
+          }
+        }
+      });
+    }
+
     var saved = "";
     try { saved = sessionStorage.getItem(PASS_KEY) || ""; } catch (e) {}
     if (saved) {
@@ -450,6 +565,7 @@
       showPanel();
       loadPending();
       loadApproved();
+      loadPhotos();
     } else {
       showLogin("");
     }

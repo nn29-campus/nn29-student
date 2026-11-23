@@ -104,6 +104,7 @@
         <button type="button" class="is-active" data-admin-tab="pending" aria-pressed="true">待审核 <span id="tab-pending-count">0</span></button>
         <button type="button" data-admin-tab="posts" aria-pressed="false">帖子管理 <span id="tab-posts-count">0</span></button>
         <button type="button" data-admin-tab="feedback" aria-pressed="false">意见反馈 <span id="tab-feedback-count">0</span></button>
+        <button type="button" data-admin-tab="photos" aria-pressed="false">图片投稿 <span id="tab-photos-count">0</span></button>
         <button type="button" data-admin-tab="compose" aria-pressed="false">发布信息</button>
       </div>
 
@@ -156,6 +157,24 @@
         <div class="admin-empty" id="admin-feedback-empty" hidden>
           <strong>还没有新的意见反馈。</strong>
           <p>同学提交的意见、纠错和版权问题会出现在这里。</p>
+        </div>
+      </div>
+
+      <div class="admin-pane" data-admin-panel="photos" hidden>
+        <div class="admin-bar">
+          <div>
+            <span class="admin-bar__kicker">图片投稿</span>
+            <strong id="admin-photos-count">0</strong>
+          </div>
+          <div class="admin-bar__actions">
+            <button type="button" id="admin-photos-refresh">刷新</button>
+          </div>
+        </div>
+        <p class="admin-photo-tip">这里看到的是投稿预览；点“下载原图”拿到未经压缩的原始文件。</p>
+        <div class="admin-photo-list" id="admin-photo-list"></div>
+        <div class="admin-empty" id="admin-photo-empty" hidden>
+          <strong>还没有图片投稿。</strong>
+          <p>学生提交的原图会出现在这里。</p>
         </div>
       </div>
 
@@ -222,8 +241,9 @@
         <h3>参与反馈</h3>
         <ul>
           <li><a href="feedback.html">意见反馈</a></li>
+          <li><a href="submission.html">图片投稿</a></li>
+          <li><a href="photos.html">校园图片</a></li>
           <li><a href="community.html">同学讨论</a></li>
-          <li><a href="index.html">首页</a></li>
         </ul>
       </div>
       <div class="foot-col">
