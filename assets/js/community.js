@@ -145,6 +145,7 @@
       text: row.content || "",
       images: Array.isArray(row.images) ? row.images : [],
       isAdmin: row.is_admin === true,
+      isPinned: row.is_pinned === true,
       createdAt: Date.parse(row.created_at) || Date.now(),
       replies: []
     };
@@ -155,7 +156,7 @@
     state.error = "";
     render();
     try {
-      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,is_admin,created_at&status=eq.approved&order=created_at.desc&limit=50");
+      var posts = await api("/v1/rdb/rest/community_posts?select=id,anon_name,category,title,content,images,is_admin,is_pinned,created_at&status=eq.approved&order=is_pinned.desc,created_at.desc&limit=50");
       var replies = await api("/v1/rdb/rest/community_replies?select=id,post_id,anon_name,content,created_at&status=eq.approved&order=created_at.asc&limit=300");
       var byPost = {};
       (replies || []).forEach(function (reply) {
@@ -199,11 +200,11 @@
 
   function postHtml(post) {
     var displayName = post.isAdmin ? "网站管理员" : post.anon;
-    return '<article class="post' + (post.isAdmin ? " post--admin" : "") + '" data-post="' + esc(post.id) + '">' +
-      (post.isAdmin ? '<div class="post__admin-note">网站公告 · 由网站管理员直接发布</div>' : "") +
+    return '<article class="post' + (post.isAdmin ? " post--admin" : "") + (post.isPinned ? " post--pinned" : "") + '" data-post="' + esc(post.id) + '">' +
+      (post.isAdmin ? '<div class="post__admin-note">' + (post.isPinned ? "置顶公告" : "网站公告") + ' · 由网站管理员直接发布</div>' : "") +
       '<div class="post__head">' +
         '<span class="anon-avatar' + (post.isAdmin ? " anon-avatar--admin" : "") + '" style="background:' + (post.isAdmin ? "linear-gradient(135deg,#0b63c5,#6bc2ff)" : avatarColor(post.anon)) + '" aria-hidden="true">' + (post.isAdmin ? "站" : "学") + '</span>' +
-        '<div class="post__meta"><strong>' + esc(displayName) + (post.isAdmin ? ' <span class="post__admin-badge">网站公告</span>' : '') + '</strong><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span></div>' +
+        '<div class="post__meta"><strong>' + esc(displayName) + (post.isAdmin ? ' <span class="post__admin-badge">' + (post.isPinned ? "置顶" : "网站公告") + '</span>' : '') + '</strong><span>' + esc(post.cat) + " · " + esc(timeAgo(post.createdAt)) + '</span></div>' +
         '<button class="post__report" type="button" data-report="' + esc(post.id) + '">举报</button>' +
       '</div>' +
       (post.title ? '<h3 class="post__title">' + esc(post.title) + '</h3>' : "") +
@@ -223,11 +224,11 @@
   function visiblePosts() {
     var posts = state.posts.slice();
     if (state.cat !== "all") posts = posts.filter(function (p) { return p.cat === state.cat; });
-    if (state.sort === "hot") {
-      posts.sort(function (a, b) { return (b.replies || []).length - (a.replies || []).length; });
-    } else {
-      posts.sort(function (a, b) { return b.createdAt - a.createdAt; });
-    }
+    posts.sort(function (a, b) {
+      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+      if (state.sort === "hot") return (b.replies || []).length - (a.replies || []).length;
+      return b.createdAt - a.createdAt;
+    });
     return posts;
   }
 

@@ -131,12 +131,15 @@
 
   function approvedHtml(post) {
     return '<article class="admin-item" data-approved-id="' + esc(post.id) + '">' +
-      '<div class="admin-item__head"><div><span class="admin-type">已通过</span><strong>' + esc(post.anon_name) + (post.is_admin ? ' · 网站管理员' : '') + '</strong></div><time>' + esc(timeAgo(post.created_at)) + '</time></div>' +
+      '<div class="admin-item__head"><div><span class="admin-type">已通过</span><strong>' + esc(post.anon_name) + (post.is_admin ? ' · 网站管理员' : '') + (post.is_pinned ? ' <span class="admin-pin-badge">置顶</span>' : '') + '</strong></div><time>' + esc(timeAgo(post.created_at)) + '</time></div>' +
       (post.title ? '<h3>' + esc(post.title) + '</h3>' : "") +
       '<p>' + nl2br(post.content) + '</p>' +
       imageHtml(post.images) +
       '<div class="admin-item__meta">' + esc(post.category) + '</div>' +
-      '<div class="admin-item__actions"><button type="button" class="admin-delete" data-delete-post="' + esc(post.id) + '">删除帖子</button></div>' +
+      '<div class="admin-item__actions">' +
+        (post.is_admin ? '<button type="button" class="admin-approve" data-pin-post="' + esc(post.id) + '" data-pinned="' + (post.is_pinned ? "true" : "false") + '">' + (post.is_pinned ? "取消置顶" : "置顶") + '</button>' : '') +
+        '<button type="button" class="admin-delete" data-delete-post="' + esc(post.id) + '">删除帖子</button>' +
+      '</div>' +
     '</article>';
   }
 
@@ -311,6 +314,21 @@
     var approvedList = document.getElementById("admin-posts-list");
     if (approvedList) {
       approvedList.addEventListener("click", async function (e) {
+        var pinBtn = e.target.closest("[data-pin-post]");
+        if (pinBtn) {
+          var pinId = pinBtn.getAttribute("data-pin-post");
+          var nextPinned = pinBtn.getAttribute("data-pinned") !== "true";
+          pinBtn.disabled = true;
+          try {
+            await api("/v1/rdb/rest/rpc/admin_set_pin", { p_pass: state.pass, p_id: pinId, p_pinned: nextPinned });
+            await loadApproved();
+            toast(nextPinned ? "已置顶" : "已取消置顶");
+          } catch (err) {
+            pinBtn.disabled = false;
+            toast("操作失败：" + (err.message || "请稍后重试"));
+          }
+          return;
+        }
         var btn = e.target.closest("[data-delete-post]");
         if (!btn) return;
         if (!window.confirm("删除这条帖子？帖子和回复会一起删除，无法恢复。")) return;
@@ -352,7 +370,8 @@
             p_category: category,
             p_title: title,
             p_content: content,
-            p_images: []
+            p_images: [],
+            p_pinned: document.getElementById("admin-post-pinned").checked
           });
           compose.reset();
           toast("已发布，所有同学都能看到");

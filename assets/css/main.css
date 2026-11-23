@@ -4593,6 +4593,38 @@ ol {
   color: #fff;
 }
 
+
+.post--pinned {
+  border-color: rgba(0, 113, 227, 0.48);
+  box-shadow: 0 18px 42px -28px rgba(0, 82, 170, 0.65);
+}
+.post--pinned .post__admin-note {
+  background: var(--blue);
+  color: #fff;
+}
+.admin-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.admin-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--blue);
+}
+.admin-pin-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e6f2ff;
+  color: var(--blue);
+  font-size: 9px;
+}
+
 @media print {
   .site-head,
   .site-foot,
